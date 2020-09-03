@@ -11,7 +11,6 @@ const app = express();
 //IMPORT ROUTES
 
 const authenticationRoute = require("./routes/authentication/authentication");
-const { valid } = require("@hapi/joi");
 
 dotenv.config();
 
@@ -30,60 +29,37 @@ app.use(express.json(), cors());
 const server = http.createServer(app);
 const io = socketIo(server);
 
-let counter1 = 0;
-let counter2 = 0;
-let userName1 = "";
-let userName2 = "";
+let message = "";
+let user = "";
 
 //SOCKET CONNECTION
 
 io.on("connection", (socket) => {
-  sendCounterValue1(socket);
-  sendCounterValue2(socket);
-  sendUserClicked1(socket);
-  sendUserClicked2(socket);
+  sendMessage(socket);
+  sendUser(socket);
 
   //TAKES CARE OF SETTING UP WHICH USER CLICKED
-  socket.on("clickeduser1", (data) => {
+  socket.on("user", (data) => {
     console.log(data.user);
-    userName1 = data;
-    console.log(userName1);
+    user = data;
+    console.log(user);
   });
-  socket.on("clickeduser2", (data) => {
+  socket.on("message", (data) => {
     console.log(data);
-    userName2 = data;
-    console.log(userName2);
-  });
-  //TAKES CARE OF COUNTER INCREEMENTS
-  socket.on("clicked1", () => {
-    counter1++;
-    console.log(counter1);
-  });
-  socket.on("clicked2", () => {
-    counter2++;
-    console.log(counter2);
+    message = data;
+    console.log(message);
   });
 });
 
-const sendCounterValue1 = (socket) => {
-  //SEND BACK TO CLIENT THE FIRST COUNTER VALUE
+const sendMessage = (socket) => {
+  //SEND BACK TO CLIENT THE MESSAGE
 
-  socket.emit("counter1", counter1);
+  socket.emit("message", message);
 };
-const sendCounterValue2 = (socket) => {
-  //SEND BACK TO CLIENT THE SECOND COUNTER VALUE
+const sendUser = (socket) => {
+  //SEND BACK TO CLIENT THE USER
 
-  socket.emit("counter2", counter2);
-};
-const sendUserClicked1 = (socket) => {
-  //SEND BACK TO CLIENT WHO HAS ACCESS FOR FIRST COUNTER BUTTON
-
-  socket.emit("user1", userName1);
-};
-const sendUserClicked2 = (socket) => {
-  //SEND BACK TO CLIENT  WHO HAS ACCESS FOR FIRST SECOND BUTTON
-
-  socket.emit("user2", userName2);
+  socket.emit("user", user);
 };
 
 app.use("/api", authenticationRoute);
