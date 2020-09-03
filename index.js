@@ -1,16 +1,24 @@
 const express = require("express");
-const http = require("http");
 const socketIo = require("socket.io");
-const port = process.env.PORT || 8000;
-const index = require("./routes/index");
+const http = require("http");
+const {
+  addUser,
+  removeUser,
+  getUser,
+  usersInRoom,
+} = require("./routes/chat/users");
+
+const app = express();
+
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const app = express();
+const PORT = process.env.PORT || 8000;
 
 //IMPORT ROUTES
 
 const authenticationRoute = require("./routes/authentication/authentication");
+const router = require("./routes/router");
 
 dotenv.config();
 
@@ -23,45 +31,25 @@ mongoose.connect(
 
 //MIDDLEWARES
 
-app.use(index);
+app.use(router);
 app.use(express.json(), cors());
 
 const server = http.createServer(app);
 const io = socketIo(server);
 
-let message = "";
-let user = "";
-
 //SOCKET CONNECTION
 
 io.on("connection", (socket) => {
-  sendMessage(socket);
-  sendUser(socket);
-
-  //TAKES CARE OF SETTING UP WHICH USER CLICKED
-  socket.on("user", (data) => {
-    console.log(data.user);
-    user = data;
-    console.log(user);
+  console.log("New Connection !!");
+  socket.on("join", ({ name, room }, callback) => {
+    console.log(name, room);
+    // callback({ error: "error" });
   });
-  socket.on("message", (data) => {
-    console.log(data);
-    message = data;
-    console.log(message);
+  socket.on("disconnect", () => {
+    console.log("User has left");
   });
 });
 
-const sendMessage = (socket) => {
-  //SEND BACK TO CLIENT THE MESSAGE
-
-  socket.emit("message", message);
-};
-const sendUser = (socket) => {
-  //SEND BACK TO CLIENT THE USER
-
-  socket.emit("user", user);
-};
-
 app.use("/api", authenticationRoute);
 
-server.listen(port, () => console.log(`server up and running at ${port}`));
+server.listen(PORT, () => console.log(`server up and running at ${PORT}`));
