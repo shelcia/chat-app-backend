@@ -14,35 +14,26 @@ const io = socketio(server);
 app.use(cors());
 app.use(router);
 
-//SOCKET CONNECTION
-
 io.on("connect", (socket) => {
-  //ADDING NEW USER
   socket.on("join", ({ name, room }, callback) => {
     const { error, user } = addUser({ id: socket.id, name, room });
 
     if (error) return callback(error);
 
-    //JOIN IS INBUILT FUNCTION WHICH JOINS THE USER WITH MATCHING ROOM
     socket.join(user.room);
 
     socket.emit("message", {
       user: "admin",
-      text: `Hi!${user.name}, welcome to ${user.room}.`,
+      text: `${user.name}, welcome to room ${user.room}.`,
     });
-
-    //BROADCAST IS INBUILT METHOD TO SEND MWESSAGE TO ALL CONNECTED CLIENT EXCEPT THE CLIENT WHO SENT IT
     socket.broadcast
       .to(user.room)
       .emit("message", { user: "admin", text: `${user.name} has joined!` });
 
-    //SENDING ROOM DATA SPECIFIC TO ROOM
     io.to(user.room).emit("roomData", {
       room: user.room,
       users: getUsersInRoom(user.room),
     });
-
-    //ERROR HANDLING
 
     callback();
   });
@@ -56,13 +47,12 @@ io.on("connect", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    //ON DISCONNECT REMOVE THE USER
     const user = removeUser(socket.id);
 
     if (user) {
       io.to(user.room).emit("message", {
         user: "Admin",
-        text: `${user.name} left the group.`,
+        text: `${user.name} has left.`,
       });
       io.to(user.room).emit("roomData", {
         room: user.room,
@@ -73,5 +63,5 @@ io.on("connect", (socket) => {
 });
 
 server.listen(process.env.PORT || 8000, () =>
-  console.log(`Server has started.`)
+  console.log(`Port running on 8000`)
 );
